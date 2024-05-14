@@ -49,7 +49,17 @@ lti.setup(process.env.LTI_KEY as string, // Key used to sign cookies and tokens
               sameSite: '' // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
             },
             // devMode: true  Set DevMode to false if running in a production environment with https
-          }
+            dynRegRoute: '/register', // Setting up dynamic registration route. Defaults to '/register'
+            dynReg: {
+              url: 'http://tool.example.com', // Tool Provider URL. Required field.
+              name: 'Tool Provider', // Tool Provider name. Required field.
+              logo: 'http://tool.example.com/assets/logo.svg', // Tool Provider logo URL.
+              description: 'Tool Description', // Tool Provider description.
+              redirectUris: ['http://tool.example.com/launch'], // Additional redirection URLs. The main URL is added by default.
+              customParameters: { key: 'value' }, // Custom parameters.
+              autoActivate: false // Whether or not dynamically registered Platforms should be automatically activated. Defaults to false.
+            }
+          } as any
          );
 
 // Set lti launch callback
@@ -281,21 +291,17 @@ app.get(
   },
 );
 
+
+
 const setup = async () => {
-  // Deploy server and open connection to the database
-  await lti.deploy({ port: Number(port) })
+  await lti.deploy({ serverless: true } as any)
+  app.use('/lti', lti.app)
 
-  // Register platform
-  await lti.registerPlatform({
-    url: 'https://platform.url',
-    name: 'Platform Name',
-    clientId: 'TOOLCLIENTID',
-    authenticationEndpoint: 'https://platform.url/auth',
-    accesstokenEndpoint: 'https://platform.url/token',
-    authConfig: { method: 'JWK_SET', key: 'https://platform.url/keyset' }
-  })
-
-  console.log(`[server]: Server is running at http://localhost:${port}`);
-}
+  app.listen(port, () => {
+    console.log(`[server]: Server is running at http://localhost:${port}`);
+  });
+};
 
 setup();
+
+
