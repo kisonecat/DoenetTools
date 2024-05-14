@@ -14,8 +14,34 @@ import {
   saveDoc,
   searchPublicDocs,
 } from "./model";
+import path from 'path';
+import { Provider as lti } from 'ltijs';
+import Database from 'ltijs-sequelize';
 
 dotenv.config();
+
+const db = new Database(process.env.DATABASE_URL, process.env.DATABASE_USER, process.env.DATABASE_PASS, { dialect: 'postgres' });
+
+// Setup provider
+lti.setup(process.env.LTI_KEY as string, // Key used to sign cookies and tokens
+          { 
+            plugin: db
+          },
+          { // Options
+            // appRoute: '/', loginRoute: '/login',
+            cookies: {
+              secure: false, // Set secure to true if the testing platform is in a different domain and https is being used
+              sameSite: '' // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
+            },
+            // devMode: true  Set DevMode to false if running in a production environment with https
+          }
+         )
+
+// Set lti launch callback
+lti.onConnect((token, req, res) => {
+  console.log(token)
+  return res.send('It\'s alive!')
+})
 
 const app: Express = express();
 app.use(cookieParser());
@@ -240,6 +266,21 @@ app.get(
   },
 );
 
-app.listen(port, () => {
+const setup = async () => {
+  // Deploy server and open connection to the database
+  await lti.deploy({ port: Number(port) })
+
+  // Register platform
+  await lti.registerPlatform({
+    url: 'https://platform.url',
+    name: 'Platform Name',
+    clientId: 'TOOLCLIENTID',
+    authenticationEndpoint: 'https://platform.url/auth',
+    accesstokenEndpoint: 'https://platform.url/token',
+    authConfig: { method: 'JWK_SET', key: 'https://platform.url/keyset' }
+  })
+
   console.log(`[server]: Server is running at http://localhost:${port}`);
-});
+}
+
+setup()
