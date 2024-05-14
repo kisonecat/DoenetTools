@@ -17,10 +17,25 @@ import {
 import path from 'path';
 import { Provider as lti } from 'ltijs';
 import Database from 'ltijs-sequelize';
+import pg from "pg";
 
 dotenv.config();
 
-const db = new Database(process.env.DATABASE_URL, process.env.DATABASE_USER, process.env.DATABASE_PASS, { dialect: 'postgres' });
+const db = new Database(process.env.DATABASE_NAME,
+                        process.env.DATABASE_USER,
+                        process.env.DATABASE_PASS,
+                        { dialect: 'postgres',
+                          dialectModule: pg,
+                          dialectOptions: {
+                            ssl: true
+                          },
+                          host: process.env.DATABASE_HOST,
+                          ssl: {
+                            require: true,
+                            native: true,
+                            rejectUnauthorized: false
+                          }
+                        });
 
 // Setup provider
 lti.setup(process.env.LTI_KEY as string, // Key used to sign cookies and tokens
@@ -35,7 +50,7 @@ lti.setup(process.env.LTI_KEY as string, // Key used to sign cookies and tokens
             },
             // devMode: true  Set DevMode to false if running in a production environment with https
           }
-         )
+         );
 
 // Set lti launch callback
 lti.onConnect((token, req, res) => {
@@ -283,4 +298,4 @@ const setup = async () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 }
 
-setup()
+setup();

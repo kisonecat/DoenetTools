@@ -15,10 +15,12 @@
   },
   "dependencies": {
     "@prisma/client": "^5.13.0",
+    "@sequelize/postgres": "^7.0.0-alpha.40",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "hi-base32": "^0.5.1",
+    "pg": "^8.11.5",
     "prisma": "^5.13.0"
   },
   "devDependencies": {
